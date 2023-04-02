@@ -2,36 +2,6 @@
 
 PyTorch deep learning project made easy.
 
-<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
-
-<!-- code_chunk_output -->
-
-* [PyTorch Template Project](#pytorch-template-project)
-    * [Requirements](#requirements)
-    * [Features](#features)
-    * [Folder Structure](#folder-structure)
-    * [Usage](#usage)
-        * [Config file format](#config-file-format)
-        * [Using config files](#using-config-files)
-        * [Resuming from checkpoints](#resuming-from-checkpoints)
-    * [Using Multiple GPU](#using-multiple-gpu)
-    * [Customization](#customization)
-        * [Custom CLI options](#custom-cli-options)
-        * [Data Loader](#data-loader)
-        * [Trainer](#trainer)
-        * [Model](#model)
-        * [Loss](#loss)
-        * [metrics](#metrics)
-        * [Additional logging](#additional-logging)
-        * [Validation data](#validation-data)
-        * [Checkpoints](#checkpoints)
-    * [Tensorboard Visualization](#tensorboard-visualization)
-    * [Contribution](#contribution)
-    * [TODOs](#todos)
-    * [License](#license)
-    * [Acknowledgements](#acknowledgements)
-
-<!-- /code_chunk_output -->
 
 ## Requirements
 
@@ -42,16 +12,18 @@ PyTorch deep learning project made easy.
 
 * Noted to create data, saved, input, and dataset by your self
 
-## Features
+# Vesuvius of kaggle
 
-* Clear folder structure which is suitable for many deep learning projects.
-* `.json` config file support for convenient parameter tuning.
-* Customizable command line options for more convenient parameter tuning.
-* Checkpoint saving and resuming.
-* Abstract base classes for faster development:
-    * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and more.
-    * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
-    * `BaseModel` provides basic model summary.
+This is a kaggle contest of [Vesuvius-challenge-ink-detection](https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection)
+
+A pytorch template project is used for further development.
+
+The submitable (or newest) version is in the root folder / "[baseline.ipynb](baseline.ipynb)"
+
+following is the instruction of the template.
+
+------
+
 
 ## Folder Structure
 
