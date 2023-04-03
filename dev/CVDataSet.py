@@ -1,11 +1,12 @@
 import math
-
 import numpy as np
 from torch.utils.data import Dataset
 
 
 class CVDataSet(Dataset):
-    def __init__(self, imgs, transforms, labels=None, data_type=None, crop_size=256):
+    # TODO: Load IMG on the fly
+    def __init__(self, imgs, transforms, labels=None, data_type=None, crop_size=256, device='cpu'):
+
         self.crop_size = crop_size
         self.imgs = imgs
         self.transforms = transforms
