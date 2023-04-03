@@ -2,36 +2,6 @@
 
 PyTorch deep learning project made easy.
 
-<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
-
-<!-- code_chunk_output -->
-
-* [PyTorch Template Project](#pytorch-template-project)
-    * [Requirements](#requirements)
-    * [Features](#features)
-    * [Folder Structure](#folder-structure)
-    * [Usage](#usage)
-        * [Config file format](#config-file-format)
-        * [Using config files](#using-config-files)
-        * [Resuming from checkpoints](#resuming-from-checkpoints)
-    * [Using Multiple GPU](#using-multiple-gpu)
-    * [Customization](#customization)
-        * [Custom CLI options](#custom-cli-options)
-        * [Data Loader](#data-loader)
-        * [Trainer](#trainer)
-        * [Model](#model)
-        * [Loss](#loss)
-        * [metrics](#metrics)
-        * [Additional logging](#additional-logging)
-        * [Validation data](#validation-data)
-        * [Checkpoints](#checkpoints)
-    * [Tensorboard Visualization](#tensorboard-visualization)
-    * [Contribution](#contribution)
-    * [TODOs](#todos)
-    * [License](#license)
-    * [Acknowledgements](#acknowledgements)
-
-<!-- /code_chunk_output -->
 
 ## Requirements
 
