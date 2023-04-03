@@ -1,0 +1,16 @@
+python=3.7.12
+wandb
+logzero
+pytorch
+torchvision
+torchaudio
+jupyter
+albumentations
+opencv
+matplotlib
+pytorch-cuda=11.7
+numpy
+pandas
+timm
+scikit-learn
+tqdm
