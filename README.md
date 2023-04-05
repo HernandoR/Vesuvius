@@ -18,7 +18,7 @@ This is a kaggle contest of [Vesuvius-challenge-ink-detection](https://www.kaggl
 
 A pytorch template project is used for further development.
 
-The submitable (or newest) version is in the root folder / "[baseline.ipynb](baseline.ipynb)"
+The submitable (or newest) version is in the root folder / "[baseline.ipynb](dev/baseline.ipynb)"
 
 following is the instruction of the template.
 
