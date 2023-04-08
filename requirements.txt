@@ -1,4 +1,4 @@
-python=3.7.12
+python=3.7
 wandb
 logzero
 pytorch
@@ -14,3 +14,4 @@ pandas
 timm
 scikit-learn
 tqdm
+cachetools
