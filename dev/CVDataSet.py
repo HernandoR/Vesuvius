@@ -1,12 +1,17 @@
 import math
+import os
+from pathlib import Path
+
+import cv2
 import numpy as np
+from cachetools import FIFOCache, cached
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 
 class CVDataSet(Dataset):
-    # TODO: Load IMG on the fly
-    def __init__(self, imgs, transforms, labels=None, data_type=None, crop_size=256, device='cpu'):
 
+    def __init__(self, imgs, transforms, labels=None, data_type=None, crop_size=256):
         self.crop_size = crop_size
         self.imgs = imgs
         self.transforms = transforms
@@ -111,3 +116,40 @@ class CVDataSet(Dataset):
             mask = -1
 
         return img, mask / 255
+
+
+class ImgLoader:
+
+    def __init__(self):
+        self.cache_dir = None
+        self.data_dir = None
+
+    def load_from_path(self, file_path: str = None):
+        return ImgLoader.load_from_path_static(self.cache_dir, self.data_dir, file_path)
+
+    @staticmethod
+    @cached(cache=FIFOCache(maxsize=10))
+    def load_from_path_static(cache_dir: Path = None, data_dir: Path = None, file_path: str = None):
+        path__npy_ = cache_dir / f"{file_path}.npy"
+
+        if os.path.exists(path__npy_):
+            img_l = np.load(str(path__npy_))
+            return img_l
+
+        if not os.path.exists(path__npy_.parent):
+            os.makedirs(path__npy_.parent)
+
+        if os.path.isfile(data_dir / file_path):
+            img_l = cv2.imread(str(data_dir / file_path), 0)
+            np.save(str(path__npy_), img_l)
+            return img_l
+
+        if os.path.isdir(data_dir / file_path):
+            img_l = []
+            files, _ = os.listdir(data_dir / file_path)
+            for file in tqdm(files):
+                img_l.append(ImgLoader.load_from_path_static(cache_dir, data_dir / f"{file_path}/{file}", data_dir))
+
+            img_l = np.stack(img_l)
+            np.save(str(path__npy_), img_l)
+            return img_l
