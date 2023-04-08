@@ -3,7 +3,6 @@ wandb
 logzero
 pytorch
 torchvision
-torchaudio
 jupyter
 albumentations
 opencv

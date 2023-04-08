@@ -118,6 +118,86 @@ class CVDataSet(Dataset):
         return img, mask / 255
 
 
+import torch
+from torch.utils.data import Dataset
+from PIL import Image
+
+class ImageDataset(Dataset):
+    def __init__(self, img_list, mask_list, label_list, data_type=None, crop_size=256):
+        self.img_list = img_list
+        self.mask_list = mask_list
+        self.label_list = label_list
+        self.data_type = data_type
+        self.crop_size = crop_size
+        self.positions = []
+        self.preprocess()
+    def preprocess(self):
+        for img in self.img_list:
+            positions = find_nonMasked_positions(img)
+            self.positions.append(positions)
+
+    def find_nonMasked_positions(mask, chop_size=256):
+        # Pad the array with black edges to make its size divisible by 256
+        height, width = mask.shape[:2]
+        pad_height = (chop_size - height % chop_size) % chop_size
+        pad_width = (chop_size - width % chop_size) % chop_size
+        mask = np.pad(mask, ((0, pad_height), (0, pad_width)) + ((0, 0),) * (mask.ndim - 2), mode='constant')
+
+        # Find non-zero positions in the array
+        positions = []
+        for n in range(0, mask.shape[0] - chop_size + 1, 128):
+            for m in range(0, mask.shape[1] - chop_size + 1, 128):
+                if np.sum(mask[n:n + chop_size, m:m + chop_size]) > 0:
+                    positions.append((n, m))
+
+        # Adjust the positions to account for the black edges
+        positions = [(n - pad_height // 2, m - pad_width // 2) for n, m in positions]
+
+        return positions
+
+    def __len__(self):
+        num=0
+        for pos in self.positions:
+            num+=len(pos)
+        return num
+            
+
+
+
+    def __getitem__(self, index):
+        # Determine the corresponding image and patch indices
+        img_index = 0
+        patch_index = index
+        while patch_index >= (Image.open(self.img_list[img_index]).size[0]//256) * (Image.open(self.img_list[img_index]).size[1]//256):
+            patch_index -= (Image.open(self.img_list[img_index]).size[0]//256) * (Image.open(self.img_list[img_index]).size[1]//256)
+            img_index += 1
+
+        # Load image and mask
+        img_path = self.img_list[img_index]
+        mask = self.mask_list[img_index]
+
+        # Load image contents using PIL
+        img = Image.open(img_path)
+
+        # Get image dimensions
+        img_width, img_height = img.size
+
+        # Determine the row and column indices of the current patch
+        row_index = patch_index // (img_width // 256)
+        col_index = patch_index % (img_width // 256)
+
+        # Crop the image and mask to the current patch
+        img_patch = img.crop((col_index * 256, row_index * 256, (col_index+1) * 256, (row_index+1) * 256))
+        mask_patch = mask.crop((col_index * 256, row_index * 256, (col_index+1) * 256, (row_index+1) * 256))
+
+        # Convert image, mask, and label to tensors
+        img_patch = torch.Tensor(np.array(img_patch).transpose((2, 0, 1)))  # Convert to (c, x, y) format
+        mask_patch = torch.Tensor(np.array(mask_patch))
+        label = torch.Tensor(self.label_list[img_index])
+
+        return img_patch, mask_patch, label
+
+
 class ImgLoader:
 
     def __init__(self):
