@@ -4,7 +4,8 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from cachetools import FIFOCache, cached
+import torch
+from cachetools import FIFOCache, cached, LRUCache
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -118,25 +119,34 @@ class CVDataSet(Dataset):
         return img, mask / 255
 
 
-import torch
-from torch.utils.data import Dataset
-from PIL import Image
+# import torch
+# from torch.utils.data import Dataset
+# from PIL import Image
 
 class ImageDataset(Dataset):
-    def __init__(self, img_list, mask_list, label_list, data_type=None, crop_size=256):
+    def __init__(self, img_list, mask_list, transforms, label_list=None, data_type=None, img_loader=None,
+                 crop_size=256):
         self.img_list = img_list
+        self.transforms = transforms
         self.mask_list = mask_list
         self.label_list = label_list
         self.data_type = data_type
         self.crop_size = crop_size
+        self.imgLoader = img_loader
         self.positions = []
         self.preprocess()
+
     def preprocess(self):
-        for img in self.img_list:
-            positions = find_nonMasked_positions(img)
+        # TODO:
+        # there's a problem on current encoding of positions that
+        # it's hard to identify the global idx, therefore,
+        # the getitem is hard to implement
+        for img_idx, img in enumerate(self.img_list):
+            positions = self.find_non_masked_positions(img)
             self.positions.append(positions)
 
-    def find_nonMasked_positions(mask, chop_size=256):
+    @staticmethod
+    def find_non_masked_positions(mask, chop_size=256):
         # Pad the array with black edges to make its size divisible by 256
         height, width = mask.shape[:2]
         pad_height = (chop_size - height % chop_size) % chop_size
@@ -156,51 +166,66 @@ class ImageDataset(Dataset):
         return positions
 
     def __len__(self):
-        num=0
+        num = 0
         for pos in self.positions:
-            num+=len(pos)
+            num += len(pos)
         return num
-            
 
-
-
+    @cached(cache=LRUCache(maxsize=32))
     def __getitem__(self, index):
         # Determine the corresponding image and patch indices
+
         img_index = 0
         patch_index = index
-        while patch_index >= (Image.open(self.img_list[img_index]).size[0]//256) * (Image.open(self.img_list[img_index]).size[1]//256):
-            patch_index -= (Image.open(self.img_list[img_index]).size[0]//256) * (Image.open(self.img_list[img_index]).size[1]//256)
-            img_index += 1
+        # TODO: consider a better way while loop
+        for i in range(len(self.positions)):
+            if patch_index >= len(self.positions[i]):
+                patch_index -= len(self.positions[i])
+                img_index += 1
 
         # Load image and mask
         img_path = self.img_list[img_index]
-        mask = self.mask_list[img_index]
+        mask_path = self.mask_list[img_index]
 
-        # Load image contents using PIL
-        img = Image.open(img_path)
+        pos_x, pos_y = self.positions[img_index][patch_index]
+
+        img = self.imgLoader.load_from_path(img_path)
+        mask = self.imgLoader.load_from_path(mask_path)
 
         # Get image dimensions
         img_width, img_height = img.size
 
-        # Determine the row and column indices of the current patch
-        row_index = patch_index // (img_width // 256)
-        col_index = patch_index % (img_width // 256)
+        assert pos_x + 256 <= img_width, f"bad pos_x {pos_x} {img_width} on img {img_path},index {index}"
+        assert pos_y + 256 <= img_height, f"bad pos_y {pos_y} {img_height} on img {img_path},index {index}"
 
-        # Crop the image and mask to the current patch
-        img_patch = img.crop((col_index * 256, row_index * 256, (col_index+1) * 256, (row_index+1) * 256))
-        mask_patch = mask.crop((col_index * 256, row_index * 256, (col_index+1) * 256, (row_index+1) * 256))
+        img_patch = img[:, pos_x:pos_x + 256, pos_y:pos_y + 256]
+        mask_patch = mask[pos_x:pos_x + 256, pos_y:pos_y + 256]
 
-        # Convert image, mask, and label to tensors
-        img_patch = torch.Tensor(np.array(img_patch).transpose((2, 0, 1)))  # Convert to (c, x, y) format
-        mask_patch = torch.Tensor(np.array(mask_patch))
-        label = torch.Tensor(self.label_list[img_index])
+        # TODO: determine if we need to do this
+        img_patch = img_patch * mask_patch
 
-        return img_patch, mask_patch, label
+        if self.data_type in ["train", "valid"]:
+            assert self.label_list is not None, f'label list is None'
+
+            label_path = self.label_list[img_index]
+            label = self.imgLoader.load_from_path(label_path)
+            label_patch = label[pos_x:pos_x + 256, pos_y:pos_y + 256]
+
+            augmented = self.transforms(image=img_patch, mask=label_patch)
+            img_patch = augmented["image"]
+            label_patch = augmented["mask"]
+
+        else:
+            augmented = self.transforms(image=img_patch)
+            img_patch = augmented["image"]
+            label_patch = -1
+
+        return img_patch, label_patch / 255
 
 
 class ImgLoader:
 
-    def __init__(self):
+    def __init__(self, cache_dir: Path = None, data_dir: Path = None):
         self.cache_dir = None
         self.data_dir = None
 
