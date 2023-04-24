@@ -78,7 +78,6 @@ class CustomDataset(Dataset):
 
         img = self.imgLoader.load_from_path(self.image_sets[img_id], channel=self.cfg['in_channels'])
         mask = self.imgLoader.load_from_path(self.masks[img_id])
-        label = self.imgLoader.load_from_path(self.labels[img_id])
 
         img = img[y1:y2, x1:x2]
         mask = mask[y1:y2, x1:x2]
@@ -90,6 +89,7 @@ class CustomDataset(Dataset):
             mask = np.pad(mask, ((0, pad_h), (0, pad_w)), mode="constant", constant_values=0)
 
         if self.type in ["train", "valid"]:
+            label = self.imgLoader.load_from_path(self.labels[img_id])
             label = label[y1:y2, x1:x2]
             if label.shape[0] != self.cfg['tile_size'] or label.shape[1] != self.cfg['tile_size']:
                 pad_h = self.cfg['tile_size'] - label.shape[0]
@@ -99,7 +99,7 @@ class CustomDataset(Dataset):
             data = self.transform(image=img, mask=mask, label=label)
             label = data["label"].astype(np.float32)
         else:
-            label = None
+            label = -1
             data = self.transform(image=img, mask=mask)
 
         # if mask != data["mask"]:
@@ -351,6 +351,7 @@ class ImgLoader:
         # pad_w = (tile_size - ori_img.shape[2] % tile_size) % tile_size
 
         return ori_img
+
     @staticmethod
     @cached(cache=FIFOCache(maxsize=10))
     def load_from_path_static(cache_dir: Path = None, data_dir: Path = None, file_path: str = None, channel=6):
