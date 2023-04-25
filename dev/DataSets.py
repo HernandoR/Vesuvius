@@ -1,3 +1,4 @@
+import itertools
 import math
 import os
 from pathlib import Path
@@ -28,7 +29,7 @@ class CustomDataset(Dataset):
         self.transform = transform
         self.type = mode
         self.imgLoader = None
-        self.patch_num = []
+        self.patch_pos = []
         self.preprocess()
 
     def preprocess(self):
@@ -39,15 +40,19 @@ class CustomDataset(Dataset):
 
         for mask in self.masks:
             # mask may be path like or numpy array
-            if isinstance(mask, (str, Path)):
-                mask = self.imgLoader.load_from_path(mask)
+            # if isinstance(mask, (str, Path)):
+            mask = self.imgLoader.load_from_path(mask)
 
             x1_num = math.ceil((mask.shape[1] - self.cfg['tile_size']) / self.cfg['stride']) + 1
             y1_num = math.ceil((mask.shape[0] - self.cfg['tile_size']) / self.cfg['stride']) + 1
+            posit = []
+            for x, y in itertools.product(range(x1_num), range(y1_num)):
+                x, y = x * self.cfg['stride'], y * self.cfg['stride']
+                if mask[y:y + self.cfg['tile_size'], x:x + self.cfg['tile_size']].sum() > 0:
+                    posit.append((x, y))
+            self.patch_pos.append(posit)
 
-            self.patch_num.append((x1_num, y1_num))
-
-        self.patch_num = np.array(self.patch_num)
+        self.patch_pos = np.array(self.patch_pos)
 
     def get_gt(self, img_idx):
         return self.imgLoader.load_from_path(self.labels[img_idx])
@@ -56,23 +61,23 @@ class CustomDataset(Dataset):
         return self.imgLoader.load_from_path(self.masks[img_idx])
 
     def __len__(self):
-        x, y = np.transpose(self.patch_num)
-        return x @ y
+        return sum([len(posit) for posit in self.patch_pos])
 
     def __getitem__(self, idx):
         # x1, y1, x2, y2 = self.xyxys[idx]
         img_id = 0
         patch_id = idx
-        for i, patch_num in enumerate(self.patch_num):
-            if patch_id < patch_num[0] * patch_num[1]:
+        for i, posit_list in enumerate(self.patch_pos):
+            if patch_id < len(posit_list):
                 img_id = i
                 break
             else:
-                patch_id -= patch_num[0] * patch_num[1]
+                patch_id -= len(posit_list)
 
-        x1_num, y1_num = self.patch_num[img_id]
-        x1 = (patch_id % x1_num) * self.cfg['stride']
-        y1 = (patch_id // x1_num) * self.cfg['stride']
+        # x1_num, y1_num = self.patch_pos[img_id]
+        # x1 = (patch_id % x1_num) * self.cfg['stride']
+        # y1 = (patch_id // x1_num) * self.cfg['stride']
+        x1, y1 = self.patch_pos[img_id][patch_id]
         x2 = x1 + self.cfg['tile_size']
         y2 = y1 + self.cfg['tile_size']
 
@@ -102,23 +107,10 @@ class CustomDataset(Dataset):
             label = -1
             data = self.transform(image=img, mask=mask)
 
-        # if mask != data["mask"]:
-        #     print("mask is not equal")`
-        #     fig, ax = plt.subplots(1, 2)
-        #     ax[0].imshow(mask)
-        #     ax[1].imshow(data["mask"])
-        #     ax[0].set_title("mask")
-        #     ax[1].set_title("data[mask]")
-        #     plt.show()
         image = data["image"]
         mask = data["mask"]
 
         return image, mask, label, (x1, y1, x2, y2)
-
-        # image = self.image_sets[idx]
-        # data = self.transform(image=image)
-        # image = data['image']
-        # return image
 
 
 class CVDataSet(Dataset):
@@ -230,9 +222,6 @@ class CVDataSet(Dataset):
         return img, mask / 255
 
 
-# import torch
-# from torch.utils.data import Dataset
-# from PIL import Image
 
 class ImageDataset(Dataset):
     def __init__(self, img_list, mask_list, transforms, label_list=None, data_type=None, img_loader=None,
@@ -355,6 +344,7 @@ class ImgLoader:
     @staticmethod
     @cached(cache=FIFOCache(maxsize=10))
     def load_from_path_static(cache_dir: Path = None, data_dir: Path = None, file_path: str = None, channel=6):
+        assert isinstance(file_path, (str, Path)), f"file path {file_path} is not a string or Path"
         if isinstance(file_path, Path):
             file_path = str(file_path)
 
