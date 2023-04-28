@@ -45,14 +45,14 @@ class CustomDataset(Dataset):
 
             x1_num = math.ceil((mask.shape[1] - self.cfg['tile_size']) / self.cfg['stride']) + 1
             y1_num = math.ceil((mask.shape[0] - self.cfg['tile_size']) / self.cfg['stride']) + 1
-            posit = []
+            posits = []
             for x, y in itertools.product(range(x1_num), range(y1_num)):
                 x, y = x * self.cfg['stride'], y * self.cfg['stride']
                 if mask[y:y + self.cfg['tile_size'], x:x + self.cfg['tile_size']].sum() > 0:
-                    posit.append((x, y))
-            self.patch_pos.append(posit)
+                    posits.append((x, y))
+            self.patch_pos.append(posits)
 
-        self.patch_pos = np.array(self.patch_pos)
+        # self.patch_pos = np.stack(self.patch_pos)
 
     def get_gt(self, img_idx):
         return self.imgLoader.load_from_path(self.labels[img_idx])
@@ -110,7 +110,7 @@ class CustomDataset(Dataset):
         image = data["image"]
         mask = data["mask"]
 
-        return image, mask, label, (x1, y1, x2, y2)
+        return image, mask, label/255, (x1, y1, x2, y2)
 
 
 class CVDataSet(Dataset):
