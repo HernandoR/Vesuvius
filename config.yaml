@@ -1,0 +1,58 @@
+name: Vesuvius
+n_gpu: 1
+
+arch:
+    Proto: UnetPlusPlus
+    model_type: Uni # Uni or Multi
+    args: {
+        backbone: se_resnext50_32x4d,
+        encoder_weights: None,
+        in_channels: &CHANNELS 16,
+        in_Pic_size: &Input_Size 224,
+        target_size: 1
+    }
+data_loader:
+    type: VesuviusDataLoader
+    args:
+        data_dir: data/
+        shuffle: true
+        validation_split: 0.1
+        num_workers: 6
+
+data_set:
+    type: VesuviusDataset
+    args:
+        cfg:
+#        Pic_size: *Input_Size
+            tile_size: *Input_Size
+            in_channels: *CHANNELS
+            stride: 56
+        image_sets: ['train', 'val']
+        batch_size: 16
+        use_amp: true
+
+trainer:
+    epochs: &Epoch 50
+    Patience: 16 # should be min(epochs/2, 16)
+
+optimizer:
+    type: Adam
+    args:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: true
+loss: nll_loss
+metrics:
+    - accuracy
+    - top_k_acc
+lr_scheduler:
+    type: CosineAnnealingLR
+    args:
+        T_max: *Epoch
+        eta_min: 1e-7
+
+
+
+
+
+

@@ -3,21 +3,27 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from logger import Loggers
+
+Logger = Loggers.get_logger(__name__)
+
 
 class BaseDataLoader(DataLoader):
     """
     Base class for all data loaders
     """
 
-    def __init__(self, dataset:list, batch_size:int, 
-                 shuffle:bool, validation_split:int, num_workers, collate_fn=default_collate):
+    def __init__(self, dataset, batch_size: int,
+                 shuffle: bool, validation_split: int,
+                 num_workers: int, collate_fn=default_collate, **kwargs):
         self.validation_split = validation_split
         self.shuffle = shuffle
 
         self.batch_idx = 0
         self.n_samples = len(dataset)
 
-        self.sampler, self.valid_sampler = self._split_sampler(self.validation_split)
+        self.sampler, self.valid_sampler = self._split_sampler(
+            self.validation_split)
 
         self.init_kwargs = {
             'dataset': dataset,
@@ -26,6 +32,7 @@ class BaseDataLoader(DataLoader):
             'collate_fn': collate_fn,
             'num_workers': num_workers
         }
+        self.init_kwargs.update(kwargs)
         super().__init__(sampler=self.sampler, **self.init_kwargs)
 
     def _split_sampler(self, split):
@@ -39,7 +46,12 @@ class BaseDataLoader(DataLoader):
 
         if isinstance(split, int):
             assert split > 0
-            assert split < self.n_samples, "validation set size is configured to be larger than entire dataset."
+            assert split < self.n_samples, ...
+            "validation set size is configured to be larger than entire dataset."
+            if split < 1.0:
+                split = int(split * self.n_samples)
+                Logger.info(
+                    f"got an fraction number for validation split, convert to {split} samples")
             len_valid = split
         else:
             len_valid = int(self.n_samples * split)
@@ -61,3 +73,5 @@ class BaseDataLoader(DataLoader):
             return None
         else:
             return DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
+
+

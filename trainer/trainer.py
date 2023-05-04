@@ -1,13 +1,16 @@
 import numpy as np
 import torch
 import wandb
+from tqdm.auto import tqdm
+
 from base import BaseTrainer
 from torchvision.utils import make_grid
 
 from utils import inf_loop, MetricTracker
 
 
-# TODO wandb: WARNING Step cannot be set when using syncing with tensorboard. Please log your step values as a metric such as 'global_step'
+# TODO wandb: WARNING Step cannot be set when using syncing with tensorboard.
+#  Please log your step values as a metric such as 'global_step'
 class Trainer(BaseTrainer):
     """
     Trainer class
@@ -46,34 +49,37 @@ class Trainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(self.data_loader):
-            data, target = data.to(self.device), target.to(self.device)
+        with tqdm(enumerate(self.data_loader), total=len(self.data_loader)) as pbar:
+            for batch_idx, (data, target) in pbar:
+                data, target = data.to(self.device), target.to(self.device)
 
-            self.optimizer.zero_grad()
-            output = self.model(data)
-            loss = self.criterion(output, target)
-            loss.backward()
-            self.optimizer.step()
-            Step = (epoch - 1) * self.len_epoch + batch_idx
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+                Step = (epoch - 1) * self.len_epoch + batch_idx
 
-            self.writer.set_step(Step)
+                self.writer.set_step(Step)
 
-            self.train_metrics.update('train/loss', loss.item())
-            for met in self.metric_ftns:
-                self.train_metrics.update('train/' + met.__name__, met(output, target))
+                self.train_metrics.update('train/loss', loss.item())
+                for met in self.metric_ftns:
+                    self.train_metrics.update('train/' + met.__name__, met(output, target))
 
-            if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()))
+                if batch_idx % self.log_step == 0:
+                    self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
+                        epoch,
+                        self._progress(batch_idx),
+                        loss.item()))
 
-                self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
-                log = self.train_metrics.result()
-                self.wandb.log(log, step=Step)
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+                    
+                    log = self.train_metrics.result()
+                    log.update({'input': wandb.Image(make_grid(data.cpu(), nrow=8, normalize=True))})
+                    wandb.log(log, step=Step)
 
-            if batch_idx == self.len_epoch:
-                break
+                if batch_idx == self.len_epoch:
+                    break
         log = self.train_metrics.result()
 
         if self.do_validation:
@@ -95,21 +101,22 @@ class Trainer(BaseTrainer):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
-                data, target = data.to(self.device), target.to(self.device)
+            with tqdm(enumerate(self.valid_data_loader), total=len(self.valid_data_loader)) as pbar:
+                for batch_idx, (data, target) in enumerate(self.valid_data_loader):
+                    data, target = data.to(self.device), target.to(self.device)
 
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                    output = self.model(data)
+                    loss = self.criterion(output, target)
 
-                Step = (epoch - 1) * len(self.valid_data_loader) + batch_idx
-                self.writer.set_step(Step, 'valid')
-                self.valid_metrics.update('valid/loss', loss.item())
-                for met in self.metric_ftns:
-                    self.valid_metrics.update('valid/' + met.__name__, met(output, target))
+                    Step = (epoch - 1) * len(self.valid_data_loader) + batch_idx
+                    self.writer.set_step(Step, 'valid')
+                    self.valid_metrics.update('valid/loss', loss.item())
+                    for met in self.metric_ftns:
+                        self.valid_metrics.update('valid/' + met.__name__, met(output, target))
 
-                self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
-                log = self.valid_metrics.result()
-                wandb.log(log, step=Step)
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+                    log = self.valid_metrics.result()
+                    wandb.log(log, step=Step)
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():

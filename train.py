@@ -1,9 +1,10 @@
 import argparse
 import collections
 
-import numpy as np
+import albumentations as Albu
 import torch
 
+from data_loader.datasets import VesuviusDataset as Dataset
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
@@ -12,19 +13,17 @@ from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
 
-# fix random seeds for reproducibility
-SEED = 123
-torch.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-np.random.seed(SEED)
-
 
 def main(config):
     logger = config.get_logger('train')
 
     # setup data_loader instances
+    trms = Albu.load('transformer.json')
+
+    dataset = config.init_obj('dataset', module_data)
+
     data_loader = config.init_obj('data_loader', module_data)
+
     valid_data_loader = data_loader.split_validation()
 
     # build model architecture, then print to console

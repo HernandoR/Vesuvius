@@ -10,7 +10,9 @@ from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
 
-class CustomDataset(Dataset):
+
+
+class VesuviusDataset(Dataset):
     """"
     Custom Dataset for loading images, masks, and labels
     params:
@@ -21,22 +23,24 @@ class CustomDataset(Dataset):
         mode: train, valid, or test
     """
 
-    def __init__(self, image_sets, cfg, masks=None, labels=None, transform=None, mode="train"):
-        self.image_sets = image_sets
+    def __init__(self, cfg, image_sets=None, masks=None, labels=None, transform=None,
+                 cache_dir=None, data_dir=None):
+        self.image_sets = None
         self.cfg = cfg
         self.masks = masks
         self.labels = labels
         self.transform = transform
-        self.type = mode
+        self.cache_dir = cache_dir
+        self.data_dir = data_dir
         self.imgLoader = None
         self.patch_pos = []
         self.preprocess()
 
     def preprocess(self):
-        if self.imgLoader is None:
+        if self.imgLoader is not None:
             self.imgLoader = ImgLoader(
-                cache_dir=self.cfg['cache_dir'],
-                data_dir=self.cfg['data_dir'])
+                cache_dir=self.cache_dir,
+                data_dir=self.data_dir)
 
         for mask in self.masks:
             # mask may be path like or numpy array
@@ -110,7 +114,7 @@ class CustomDataset(Dataset):
         image = data["image"]
         mask = data["mask"]
 
-        return image, mask, label/255, (x1, y1, x2, y2)
+        return image, mask, label / 255, (x1, y1, x2, y2)
 
 
 class CVDataSet(Dataset):

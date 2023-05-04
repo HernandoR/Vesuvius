@@ -22,6 +22,8 @@ The submitable (or newest) version is in the root folder / "[baseline.ipynb](dev
 
 following is the instruction of the template.
 
+
+Data URL https://gist.github.com/nat/e7266a5c765686b7976df10d3a85041b
 ------
 
 
@@ -79,7 +81,7 @@ Try `python train.py -c config.json` to run code.
 
 Config files are in `.json` format:
 
-```javascript
+```json5
 {
   "name": "Mnist_LeNet",        // training session name
   "n_gpu": 1,                   // number of GPUs to use for training.
@@ -96,7 +98,7 @@ Config files are in `.json` format:
       "data_dir": "data/",             // dataset path
       "batch_size": 64,                // batch size
       "shuffle": true,                 // shuffle training data before splitting
-      "validation_split": 0.1          // size of validation dataset. float(portion) or int(number of samples)
+      "validation_split": 0.1,          // size of validation dataset. float(portion) or int(number of samples)
       "num_workers": 2,                // number of cpu processes to be used for data loading
     }
   },
@@ -125,8 +127,8 @@ Config files are in `.json` format:
     "save_freq": 1,                    // save checkpoints every save_freq epochs
     "verbosity": 2,                    // 0: quiet, 1: per epoch, 2: full
   
-    "monitor": "min val_loss"          // mode and metric for model performance monitoring. set 'off' to disable.
-    "early_stop": 10	                 // number of epochs to wait before early stop. set 0 to disable.
+    "monitor": "min val_loss",          // mode and metric for model performance monitoring. set 'off' to disable.
+    "early_stop": 10,	                 // number of epochs to wait before early stop. set 0 to disable.
   
     "tensorboard": true,               // enable tensorboard visualization
   }

@@ -1,0 +1,37 @@
+HOST: Vincit
+PATHS:
+  CACHE_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\saved\cache
+  CP_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\saved\checkpoints
+  DATA_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\data\raw
+  EXTERNAL_MODELS_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\model
+  HOST: Vincit
+  LOG_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\saved\logs
+  OUTPUT_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..\saved
+  ROOT_DIR: D:\Codes\python\kaggle\Vesuvius\dev\Server_scripts\..\..
+PATIENCE: 16
+backbone: se_resnext50_32x4d
+batch_size: 16
+comp_name: vesuvius
+epochs: 500
+exp_name: Unet++_2.5d_Unimodel
+in_channels: 16
+inf_weight: best
+lr: 1.0000000000000002e-06
+max_grad_norm: 1000
+metric_direction: maximize
+min_lr: 1.0e-06
+model_name: UnetPlusPlus
+num_workers: 2
+objective_cv: binary
+pretrained: true
+print_freq: 50
+resume: true
+run_id: Unet++_2.5d_Unimodel_20230507_084234
+scheduler: GradualWarmupSchedulerV2
+seed: 3407
+stride: 56
+target_size: 1
+tile_size: 224
+use_amp: true
+warmup_factor: 10
+weight_decay: 1.0e-06

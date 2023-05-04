@@ -108,6 +108,10 @@ output/
 saved/
 datasets/
 
+model/*/*
+
+!saved/checkpoints/
+
 # editor, os cache directory
 .vscode/
 .idea/
