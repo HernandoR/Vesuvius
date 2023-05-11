@@ -1,0 +1,77 @@
+comp_name: vesuvius
+objective_cv: binary
+seed: 3407
+Run_mode: train
+inf_weight: best
+metric_direction: maximize
+wandb_mode: offline # online offline disabled
+
+n_gpu: 1
+
+max_grad_norm: 1000
+use_amp: true
+resume: &resume null
+
+print_freq: 50
+warmup_factor: 10
+
+# trainner:
+epochs: &epochs 50
+Patience: &Patience 16 # should be min(epochs/2, 16)
+loss: &loss MCCLoss # BCELoss, null_loss, MCCLoss
+metrics: &metrics [ fbeta, accuracy, precision, recall, roc_auc ]
+
+
+model:
+    Proto: Unet # DeepLabV3, FPN, Unet,UnetPlusPlus, PSPNet
+
+    resume: *resume
+    pretrained: true
+    model_type: Multi # Uni or Multi
+    tile_size: &tile_size 224
+    in_channels: &in_channels 16
+    args:
+        encoder_name: se_resnext50_32x4d
+        encoder_weights: imagenet
+        in_channels: *in_channels
+        classes: 1 # targer channels
+        activation: sigmoid
+
+dataset:
+    type: VesuviusDataset
+    image_sets: ['1'] # [ '1', '2', '3']
+    tile_size: *tile_size
+    in_channels: *in_channels
+    stride: 56
+    use_amp: true
+
+data_loader:
+    type: VesuviusDataLoader
+    args:
+        shuffle: true
+        batch_size: 16
+        validation_split: 0.1
+        num_workers: 4
+
+
+trainer:
+    epochs: *epochs
+    monitor: max train/fbeta
+    save_period: 5
+
+    early_stop: *Patience
+
+
+scheduler:
+    type: CosineAnnealingLR
+    args:
+        T_max: *epochs
+        eta_min: 1.0e-07
+
+optimizer:
+    type: AdamW
+    args:
+        lr: 1.0e-07
+        weight_decay: 1.0e-06
+
+    min_lr: 1.0e-06
