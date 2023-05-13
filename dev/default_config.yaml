@@ -51,7 +51,7 @@ data_loader:
         shuffle: true
         batch_size: 16
         validation_split: 0.1
-        num_workers: 4
+        num_workers: 2
 
 
 trainer:
@@ -71,7 +71,7 @@ scheduler:
 optimizer:
     type: AdamW
     args:
-        lr: 1.0e-07
+        lr: 1.0e-06
         weight_decay: 1.0e-06
 
     min_lr: 1.0e-06
