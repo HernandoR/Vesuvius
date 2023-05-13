@@ -21,7 +21,7 @@ class BaseCacheLoader:
         cache_size = 16
     if _Memory_available > 100:
         Logger.info(f"seems no need for cache")
-        cache_size = None
+        cache_size = 128
     else:
         cache_size = 32
 

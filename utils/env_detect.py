@@ -27,7 +27,7 @@ def decide_paths():
 
     if HOST == "cloudlab":
         ROOT_DIR = Path("/local/Codes/Vesuvius").absolute()
-        DATA_DIR = ROOT_DIR / "data" / "raw"
+        DATA_DIR = Path("/vesuvius_kaggle")
         OUTPUT_DIR = ROOT_DIR / "saved"
 
         EXTERNAL_MODELS_DIR = ROOT_DIR / "model"
@@ -49,7 +49,7 @@ def decide_paths():
     LOG_DIR = OUTPUT_DIR / "logs"
     CACHE_DIR = OUTPUT_DIR / "cache"
     print(f"ROOT_DIR: {ROOT_DIR}")
-    assert os.listdir(DATA_DIR) != [], "Data directory is empty"
+    assert os.listdir(DATA_DIR) != [], f"Data directory {DATA_DIR} is empty"
 
     for p in [ROOT_DIR, DATA_DIR, OUTPUT_DIR, CP_DIR, LOG_DIR, CACHE_DIR]:
         if os.path.exists(p) is False:
