@@ -1,10 +1,10 @@
 import itertools
 import math
 
-import torch
+import numpy as np
 from torch.utils.data import Dataset
 
-from base.base_cache_loader import BaseCacheLoader
+from data_loader.image_cache_loader import ImageCacheLoader
 from logger import Loggers
 
 Logger = Loggers.get_logger(__name__)
@@ -34,7 +34,7 @@ class VesuviusDataset(Dataset):
 
     def preprocess(self):
         if self.imgLoader is None:
-            self.imgLoader = BaseCacheLoader(
+            self.imgLoader = ImageCacheLoader(
                 cache_dir=self.cfg['cache_dir'],
                 data_dir=self.cfg['data_dir'])
 
@@ -63,7 +63,9 @@ class VesuviusDataset(Dataset):
     def __len__(self):
         return sum([len(posit) for posit in self.patch_pos])
 
-    def __getitem__(self, idx):
+    def index_patch_id(self, idx) -> (int, int):
+
+        # indexing to the right patch
         img_id = 0
         patch_id = idx
         for i, posit_list in enumerate(self.patch_pos):
@@ -72,11 +74,17 @@ class VesuviusDataset(Dataset):
                 break
             else:
                 patch_id -= len(posit_list)
+        return img_id, patch_id
+
+    def __getitem__(self, idx):
+
+        img_id, patch_id = self.index_patch_id(idx)
 
         x1, y1 = self.patch_pos[img_id][patch_id]
         x2 = x1 + self.cfg['tile_size']
         y2 = y1 + self.cfg['tile_size']
 
+        # noted that the images and labels are by numpy till being transformed
         img = self.imgLoader.load_from_path(self.image_sets[img_id], channel=self.cfg['in_channels'])
         img = img[y1:y2, x1:x2]
 
@@ -87,18 +95,30 @@ class VesuviusDataset(Dataset):
 
         label = self.imgLoader.load_from_path(self.labels[img_id])
         label = label[y1:y2, x1:x2]
-        # if label.shape[0] != self.cfg['tile_size'] or label.shape[1] != self.cfg['tile_size']:
-        #     pad_h = self.cfg['tile_size'] - label.shape[0]
-        #     pad_w = self.cfg['tile_size'] - label.shape[1]
-        #     label = np.pad(label, ((0, pad_h), (0, pad_w)), mode="constant", constant_values=0)
 
+        if label.shape[0] == label.shape[1] == self.cfg['tile_size']:
+            pass
+        else:
+            # pad label
+            pad_h = self.cfg['tile_size'] - label.shape[0]
+            pad_w = self.cfg['tile_size'] - label.shape[1]
+            label = np.pad(label, (0, pad_w, 0, pad_h), mode='constant', value=0)
+
+        # data = self.transform(image=img, mask=label)
+        # label = data["mask"]
+
+        # it should be considered, if we should transform
+        # into tensor or not
+
+        # Notice the axis movement in train example
+        # dig if needed.
         data = self.transform(image=img, mask=label)
-        label = data["mask"]
         image = data["image"]
-        # image = image.to(torch.uint8)
-        label = label.to(torch.float32)
+        label = data["mask"]
+        #
+        # label = label.to(torch.float32)
         if label.max() > 2:
-            # Logger.info(f'label max {label.max()} > 2')
+            # Logger.info(f' label max {label.max()} > 2')
             label = label / 255
         if image.max() > 2:
             Logger.info(f'image max {image.max()} > 2')

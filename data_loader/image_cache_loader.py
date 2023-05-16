@@ -12,7 +12,7 @@ from logger import Loggers
 Logger = Loggers.get_logger(__name__)
 
 
-class BaseCacheLoader:
+class ImageCacheLoader:
     # get the available memory size
     _Memory_available = psutil.virtual_memory().available / 1024 / 1024 / 1024
 
@@ -31,7 +31,7 @@ class BaseCacheLoader:
         self.data_dir = data_dir
 
     def load_from_path(self, file_path: str = None, channel=6, tile_size=224):
-        ori_img = BaseCacheLoader.load_from_path_static(self.cache_dir, self.data_dir, file_path, channel=channel)
+        ori_img = ImageCacheLoader.load_from_path_static(self.cache_dir, self.data_dir, file_path, channel=channel)
         # pad_h = (tile_size - ori_img.shape[1] % tile_size) % tile_size
         # img = np.pad(ori_img, ((0, 0), (0, pad_h), (0, pad_w)), mode='constant')
         # pad_w = (tile_size - ori_img.shape[2] % tile_size) % tile_size
@@ -53,6 +53,7 @@ class BaseCacheLoader:
 
         path__npy_ = cache_dir / f"{file_path}_cache.npy"
 
+        # load from cache
         if os.path.exists(path__npy_):
             img_l = np.load(str(path__npy_), allow_pickle=True)
             assert img_l is not None, f"Cached file {path__npy_} is None"
@@ -63,6 +64,7 @@ class BaseCacheLoader:
 
         if os.path.isfile(data_dir / file_path):
             img_l = cv2.imread(str(data_dir / file_path), 0)
+            img_l = cv2.cvtColor(img_l, cv2.COLOR_BGR2RGB)
             img_l = img_l.astype(np.uint8)
             assert img_l is not None, f"Image file {data_dir / file_path} is None"
             np.save(str(path__npy_), img_l)
@@ -85,7 +87,7 @@ class BaseCacheLoader:
 
             files = files[start:end]
             for file in files:
-                img_l.append(BaseCacheLoader.load_from_path_static(cache_dir, data_dir, f"{file_path}/{file}"))
+                img_l.append(ImageCacheLoader.load_from_path_static(cache_dir, data_dir, f"{file_path}/{file}"))
 
             img_l = np.stack(img_l, axis=2)
             np.save(str(path__npy_), img_l)

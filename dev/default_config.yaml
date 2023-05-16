@@ -29,17 +29,17 @@ model:
     pretrained: true
     model_type: Multi # Uni or Multi
     tile_size: &tile_size 224
-    in_channels: &in_channels 16
+    in_channels: &in_channels 6
     args:
         encoder_name: se_resnext50_32x4d
         encoder_weights: imagenet
         in_channels: *in_channels
         classes: 1 # targer channels
-        activation: sigmoid
+        activation: None
 
 dataset:
     type: VesuviusDataset
-    image_sets: ['1'] # [ '1', '2', '3']
+    image_sets: ['3'] # [ '1', '2', '3']
     tile_size: *tile_size
     in_channels: *in_channels
     stride: 56

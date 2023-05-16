@@ -38,7 +38,7 @@ class VesuviusModel(nn.Module):
 
     def forward(self, image):
         x = self.encoder(image)
-        # x = x.squeeze(-1)
+        x = x.squeeze(-1)
         return x
 
 
