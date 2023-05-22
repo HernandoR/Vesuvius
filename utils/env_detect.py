@@ -1,7 +1,10 @@
 import os
 import socket
 from pathlib import Path
+from logger.Loggers import get_logger
 
+
+logger = get_logger(__name__)
 
 def get_saved_model_path(cp_dir, model_id, fold=None):
     if fold is None:
@@ -48,8 +51,10 @@ def decide_paths():
     CP_DIR = OUTPUT_DIR / "checkpoints"
     LOG_DIR = OUTPUT_DIR / "logs"
     CACHE_DIR = OUTPUT_DIR / "cache"
-    print(f"ROOT_DIR: {ROOT_DIR}")
-    assert os.listdir(DATA_DIR) != [], f"Data directory {DATA_DIR} is empty"
+    logger.info(f"ROOT_DIR: {ROOT_DIR}")
+    # assert os.listdir(DATA_DIR) != [], f"Data directory {DATA_DIR} is empty"
+    if os.listdir(DATA_DIR) == []:
+        logger.warning(f"Data directory {DATA_DIR} is empty")
 
     for p in [ROOT_DIR, DATA_DIR, OUTPUT_DIR, CP_DIR, LOG_DIR, CACHE_DIR]:
         if os.path.exists(p) is False:

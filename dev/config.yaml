@@ -1,27 +1,28 @@
 PATHS:
-  CACHE_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\saved\cache
-  CP_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\saved\checkpoints
-  DATA_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\data\raw
-  EXTERNAL_MODELS_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\model
-  LOG_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\saved\logs
-  OUTPUT_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..\saved
-  ROOT_DIR: D:\Codes\python\kaggle\Vesuvius\dev\..
+  CACHE_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/cache
+  CP_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/checkpoints
+  DATA_DIR: /Users/lz/Codes/python/Vesuvius/dev/../data/raw
+  EXTERNAL_MODELS_DIR: /Users/lz/Codes/python/Vesuvius/dev/../model
+  LOG_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/logs
+  OUTPUT_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved
+  ROOT_DIR: /Users/lz/Codes/python/Vesuvius/dev/..
 Patience: 16
 Run_mode: train
 comp_name: vesuvius
 data_loader:
   args:
     batch_size: 16
-    num_workers: 4
+    num_workers: 2
     shuffle: true
     validation_split: 0.1
+  num_workers: 2
   type: VesuviusDataLoader
 dataset:
-  cache_dir: D:\Codes\python\kaggle\Vesuvius\dev\..\saved\cache
-  data_dir: D:\Codes\python\kaggle\Vesuvius\dev\..\data\raw
+  cache_dir: /Users/lz/Codes/python/Vesuvius/dev/../saved/cache
+  data_dir: /Users/lz/Codes/python/Vesuvius/dev/../data/raw
   image_sets:
-  - '1'
-  in_channels: 16
+  - '3'
+  in_channels: 6
   stride: 56
   tile_size: 224
   type: VesuviusDataset
@@ -40,12 +41,12 @@ metrics:
 model:
   Proto: Unet
   args:
-    activation: sigmoid
+    activation: None
     classes: 1
     encoder_name: se_resnext50_32x4d
     encoder_weights: imagenet
-    in_channels: 16
-  in_channels: 16
+    in_channels: 6
+  in_channels: 6
   model_type: Multi
   pretrained: true
   resume: null
@@ -54,7 +55,7 @@ n_gpu: 1
 objective_cv: binary
 optimizer:
   args:
-    lr: 1.0e-07
+    lr: 1.0e-06
     weight_decay: 1.0e-06
   min_lr: 1.0e-06
   type: AdamW

@@ -21,6 +21,18 @@ class VesuviusDataset(Dataset):
         mode: train, valid, or test
     """
 
+    # Try to save memory
+    __slots__ = (
+        "image_sets",
+        "cfg",
+        "masks",
+        "labels",
+        "transform",
+        "imageLoader",
+        "patch_pos",
+
+    )
+
     def __init__(self, cfg, image_sets=None, masks=None, labels=None, transform=None):
         self.image_sets = image_sets
         self.cfg = cfg
@@ -117,10 +129,10 @@ class VesuviusDataset(Dataset):
         label = data["mask"]
         #
         # label = label.to(torch.float32)
-        if label.max() > 2:
+        if label.max() >= 2:
             # Logger.info(f' label max {label.max()} > 2')
             label = label / 255
-        if image.max() > 2:
+        if image.max() >= 2:
             Logger.info(f'image max {image.max()} > 2')
             image = image / 255
 

@@ -34,7 +34,7 @@ model:
         encoder_name: se_resnext50_32x4d
         encoder_weights: imagenet
         in_channels: *in_channels
-        classes: 1 # targer channels
+        classes: 1 # target channels
         activation: None
 
 dataset:
@@ -47,11 +47,12 @@ dataset:
 
 data_loader:
     type: VesuviusDataLoader
+    num_workers: &num_workers 2
     args:
         shuffle: true
         batch_size: 16
         validation_split: 0.1
-        num_workers: 2
+        num_workers: *num_workers
 
 
 trainer:
