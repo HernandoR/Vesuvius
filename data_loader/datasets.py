@@ -97,8 +97,8 @@ class VesuviusDataset(Dataset):
         y2 = y1 + self.cfg['tile_size']
 
         # noted that the images and labels are by numpy till being transformed
-        img = self.imgLoader.load_from_path(self.image_sets[img_id], channel=self.cfg['in_channels'])
-        img = img[y1:y2, x1:x2]
+        image = self.imgLoader.load_from_path(self.image_sets[img_id], channel=self.cfg['in_channels'])
+        image = image[y1:y2, x1:x2]
 
         # if img.shape[0] != self.cfg['tile_size'] or img.shape[1] != self.cfg['tile_size']:
         #     pad_h = self.cfg['tile_size'] - img.shape[0]
@@ -122,9 +122,12 @@ class VesuviusDataset(Dataset):
         # it should be considered, if we should transform
         # into tensor or not
 
+        assert image is not None
+        assert label is not None
+
         # Notice the axis movement in train example
         # dig if needed.
-        data = self.transform(image=img, mask=label)
+        data = self.transform(image=image, mask=label)
         image = data["image"]
         label = data["mask"]
         #

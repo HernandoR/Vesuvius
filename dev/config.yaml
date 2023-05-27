@@ -1,11 +1,11 @@
 PATHS:
-  CACHE_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/cache
-  CP_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/checkpoints
-  DATA_DIR: /Users/lz/Codes/python/Vesuvius/dev/../data/raw
-  EXTERNAL_MODELS_DIR: /Users/lz/Codes/python/Vesuvius/dev/../model
-  LOG_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved/logs
-  OUTPUT_DIR: /Users/lz/Codes/python/Vesuvius/dev/../saved
-  ROOT_DIR: /Users/lz/Codes/python/Vesuvius/dev/..
+  CACHE_DIR: /home/lz/Codes/Vesuvius/dev/../saved/cache
+  CP_DIR: /home/lz/Codes/Vesuvius/dev/../saved/checkpoints
+  DATA_DIR: /home/lz/Codes/Vesuvius/dev/../data/raw
+  EXTERNAL_MODELS_DIR: /home/lz/Codes/Vesuvius/dev/../model
+  LOG_DIR: /home/lz/Codes/Vesuvius/dev/../saved/logs
+  OUTPUT_DIR: /home/lz/Codes/Vesuvius/dev/../saved
+  ROOT_DIR: /home/lz/Codes/Vesuvius/dev/..
 Patience: 16
 Run_mode: train
 comp_name: vesuvius
@@ -18,8 +18,8 @@ data_loader:
   num_workers: 2
   type: VesuviusDataLoader
 dataset:
-  cache_dir: /Users/lz/Codes/python/Vesuvius/dev/../saved/cache
-  data_dir: /Users/lz/Codes/python/Vesuvius/dev/../data/raw
+  cache_dir: /home/lz/Codes/Vesuvius/dev/../saved/cache
+  data_dir: /home/lz/Codes/Vesuvius/dev/../data/raw
   image_sets:
   - '3'
   in_channels: 6
@@ -29,7 +29,7 @@ dataset:
   use_amp: true
 epochs: 50
 inf_weight: best
-loss: MCCLoss
+loss: BCELoss
 max_grad_norm: 1000
 metric_direction: maximize
 metrics:
@@ -41,7 +41,7 @@ metrics:
 model:
   Proto: Unet
   args:
-    activation: None
+    activation: null
     classes: 1
     encoder_name: se_resnext50_32x4d
     encoder_weights: imagenet

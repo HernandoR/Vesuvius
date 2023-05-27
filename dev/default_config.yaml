@@ -18,7 +18,7 @@ warmup_factor: 10
 # trainner:
 epochs: &epochs 50
 Patience: &Patience 16 # should be min(epochs/2, 16)
-loss: &loss MCCLoss # BCELoss, null_loss, MCCLoss
+loss: &loss BCELoss # BCELoss, null_loss, MCCLoss
 metrics: &metrics [ fbeta, accuracy, precision, recall, roc_auc ]
 
 
@@ -35,7 +35,7 @@ model:
         encoder_weights: imagenet
         in_channels: *in_channels
         classes: 1 # target channels
-        activation: None
+        activation: null # null, sigmoid, softmax2d
 
 dataset:
     type: VesuviusDataset
