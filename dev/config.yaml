@@ -21,7 +21,7 @@ dataset:
   cache_dir: /home/lz/Codes/Vesuvius/dev/../saved/cache
   data_dir: /home/lz/Codes/Vesuvius/dev/../data/raw
   image_sets:
-  - '3'
+  - '2'
   in_channels: 6
   stride: 56
   tile_size: 224
@@ -49,7 +49,7 @@ model:
   in_channels: 6
   model_type: Multi
   pretrained: true
-  resume: null
+  resume_path: null
   tile_size: 224
 n_gpu: 1
 objective_cv: binary
@@ -60,7 +60,8 @@ optimizer:
   min_lr: 1.0e-06
   type: AdamW
 print_freq: 50
-resume: null
+resume: ture
+resume_path: null
 scheduler:
   args:
     T_max: 50
@@ -73,5 +74,5 @@ trainer:
   monitor: max train/fbeta
   save_period: 5
 use_amp: true
-wandb_mode: offline
+wandb_mode: online
 warmup_factor: 10

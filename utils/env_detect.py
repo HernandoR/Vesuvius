@@ -3,8 +3,8 @@ import socket
 from pathlib import Path
 from logger.Loggers import get_logger
 
-
 logger = get_logger(__name__)
+
 
 def get_saved_model_path(cp_dir, model_id, fold=None):
     if fold is None:

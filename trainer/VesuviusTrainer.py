@@ -53,7 +53,7 @@ class VesuviusTrainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
-        with tqdm(enumerate(self.data_loader,start=1), total=self.len_epoch) as pbar:
+        with tqdm(enumerate(self.data_loader, start=1), total=self.len_epoch) as pbar:
             for batch_idx, (data, target) in pbar:
 
                 # data, target = data.astype(np.uint8), target.astype(np.uint8)
@@ -69,7 +69,8 @@ class VesuviusTrainer(BaseTrainer):
                 self.train_metrics.update('train/loss', loss.item())
 
                 for met in self.metric_ftns:
-                    self.train_metrics.update('train/' + met.__name__, met(output, target))
+                    key, value = 'train/' + met.__name__, met(output, target)
+                    self.train_metrics.update(key, value)
                     # self.train_metrics.update('train/' + met.__name__, met(output_cpu, target_cpu))
                 # del output_cpu, target_cpu
 

@@ -50,17 +50,18 @@ class VesuviusDataset(Dataset):
                 cache_dir=self.cfg['cache_dir'],
                 data_dir=self.cfg['data_dir'])
 
-        for mask in self.masks:
+        # for region_picker in self.masks:
+        for region_picker_path in self.labels:
             # mask may be path like or numpy array
             # if isinstance(mask, (str, Path)):
-            mask = self.imgLoader.load_from_path(mask)
+            region_picker = self.imgLoader.load_from_path(region_picker_path)
 
-            x1_num = math.ceil((mask.shape[1] - self.cfg['tile_size']) / self.cfg['stride']) + 1
-            y1_num = math.ceil((mask.shape[0] - self.cfg['tile_size']) / self.cfg['stride']) + 1
+            x1_num = math.ceil((region_picker.shape[1] - self.cfg['tile_size']) / self.cfg['stride']) + 1
+            y1_num = math.ceil((region_picker.shape[0] - self.cfg['tile_size']) / self.cfg['stride']) + 1
             posits = []
             for x, y in itertools.product(range(x1_num), range(y1_num)):
                 x, y = x * self.cfg['stride'], y * self.cfg['stride']
-                if mask[y:y + self.cfg['tile_size'], x:x + self.cfg['tile_size']].sum() > 0:
+                if region_picker[y:y + self.cfg['tile_size'], x:x + self.cfg['tile_size']].sum() > 0:
                     posits.append((x, y))
             self.patch_pos.append(posits)
 
@@ -108,13 +109,13 @@ class VesuviusDataset(Dataset):
         label = self.imgLoader.load_from_path(self.labels[img_id])
         label = label[y1:y2, x1:x2]
 
-        if label.shape[0] == label.shape[1] == self.cfg['tile_size']:
-            pass
-        else:
-            # pad label
-            pad_h = self.cfg['tile_size'] - label.shape[0]
-            pad_w = self.cfg['tile_size'] - label.shape[1]
-            label = np.pad(label, (0, pad_w, 0, pad_h), mode='constant', value=0)
+        # if label.shape[0] == label.shape[1] == self.cfg['tile_size']:
+        #     pass
+        # else:
+        #     # pad label
+        #     pad_h = self.cfg['tile_size'] - label.shape[0]
+        #     pad_w = self.cfg['tile_size'] - label.shape[1]
+        #     label = np.pad(label, (0, pad_w, 0, pad_h), mode='constant', value=0)
 
         # data = self.transform(image=img, mask=label)
         # label = data["mask"]
@@ -131,7 +132,7 @@ class VesuviusDataset(Dataset):
         image = data["image"]
         label = data["mask"]
         #
-        # label = label.to(torch.float32)
+        label = label.to(image.dtype)
         if label.max() >= 2:
             # Logger.info(f' label max {label.max()} > 2')
             label = label / 255

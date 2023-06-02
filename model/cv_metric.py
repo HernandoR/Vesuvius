@@ -14,43 +14,47 @@ should promise that the output and target are both 0/1
 """
 
 
-def normalize(output, target, th=0.25):
-    if output.max() > 1:
-        output = output / 255
-    if target.max() > 1:
-        target = target / 255
-    if torch.unique(output) not in ([0], [1], [0, 1]):
-        output = (output >= th)
-    if torch.unique(target) not in ([0], [1], [0, 1]):
-        target = (target >= th)
-    return output, target
+def normalize(tens, th=0.25):
+    if tens.max() > 1:
+        tens = tens.sigmoid()
+    # if target.max() > 1:
+    #     target = target / 255
+    if torch.unique(tens) not in ([0], [1], [0, 1]):
+        # Logger.info(f'unique output:{torch.unique(output)}')
+        tens = (tens >= th)
+    # if torch.unique(target) not in ([0], [1], [0, 1]):
+    #     # Logger.info(f'unique target:{torch.unique(target)}')
+    #     target = (target >= th)
+    # tens, target = tens.to(torch.uint8), target.to(torch.uint8)
+    tens = tens.to(torch.uint8)
+    return tens
 
 
 def accuracy(output, target, smooth=1e-6):
-    output, target = normalize(output, target)
-    y_count = reduce(lambda x, y: x * y, output.shape)
-    # output_reverse = ~output
-    ctp = output[target == 1].sum()
-    # ctn = output[target == 0].sum()
-    ctn = (~output[target == 0]).sum()
-    acc = (ctp + ctn) / (y_count + smooth)
-    return acc
+    output = normalize(output)
+    target = normalize(target)
+    true_positives = (output & target).sum().item()
+    total_samples = target.numel()
+    accuracy_score = true_positives / (total_samples + smooth)
+    return accuracy_score
 
 
 def precision(output, target, smooth=1e-6):
-    output, target = normalize(output, target)
-    ctp = output[target == 1].sum()
-    cfp = output[target == 0].sum()
-
-    return ctp / (ctp + cfp + smooth)
+    output = normalize(output)
+    target = normalize(target)
+    true_positives = (output & target).sum().item()
+    false_positives = (output & ~target).sum().item()
+    precision_score = true_positives / (true_positives + false_positives + smooth)
+    return precision_score
 
 
 def recall(output, target, smooth=1e-6):
-    output, target = normalize(output, target)
-    y_true_count = target.sum()
-    ctp = output[target == 1].sum()
-
-    return ctp / (y_true_count + smooth)
+    output = normalize(output)
+    target = normalize(target)
+    true_positives = (output & target).sum().item()
+    false_negatives = (~output & target).sum().item()
+    recall_score = true_positives / (true_positives + false_negatives + smooth)
+    return recall_score
 
 
 def roc_auc(output, target, smooth=1e-6):
@@ -59,38 +63,50 @@ def roc_auc(output, target, smooth=1e-6):
     higher the better
     at least 1
     """
-    output, target = normalize(output, target)
-    y_true_count = target.sum()
-    # noinspection PyUnresolvedReferences
-    y_false_count = (~target).sum()
-    ctp = output[target == 1].sum()
-    cfp = output[target == 0].sum()
-    # c_precision = ctp / (ctp + cfp + smooth)
-    c_recall = ctp / (y_true_count + smooth)
-
-    TPR = c_recall
-    FPR = cfp / (y_false_count + smooth)
-
-    return TPR / FPR
+    output = normalize(output)
+    target = normalize(target)
+    true_positives = (output & target).sum().item()
+    false_positives = (output & ~target).sum().item()
+    true_negatives = (~output & ~target).sum().item()
+    false_negatives = (~output & target).sum().item()
+    sensitivity = true_positives / (true_positives + false_negatives + smooth)
+    specificity = true_negatives / (true_negatives + false_positives + smooth)
+    roc_auc_score = (sensitivity + specificity) / 2
+    return roc_auc_score
 
 
-def fbeta(output, target, th=0.5, beta=0.5, smooth=1e-6):
+def fbeta(output, target, th=0.25, beta=0.5, smooth=1e-6):
     """
     f_beta with numpy
     https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/397288
     """
 
-    output, target = normalize(output, target, th=th)
-    y_true_count = target.sum()
-    ctp = output[target == 1].sum()
-    cfp = output[target == 0].sum()
-    beta_squared = beta * beta
+    # output, target = normalize(output, target, th=th)
+    output = normalize(output, th=th)
+    target = normalize(target, th=th)
+    # Calculate true positives, false positives, and false negatives
+    true_positives = (output * target).sum()
+    false_positives = (output * (1 - target)).sum()
+    false_negatives = ((1 - output) * target).sum()
 
-    c_precision = ctp / (ctp + cfp + smooth)
-    c_recall = ctp / (y_true_count + smooth)
-    dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
+    # Calculate precision and recall
+    precision = true_positives / (true_positives + false_positives + smooth)
+    recall = true_positives / (true_positives + false_negatives + smooth)
 
-    return dice
+    # Calculate F-beta score
+    f_beta = (1 + beta ** 2) * (precision * recall) / ((beta ** 2 * precision) + recall + smooth)
+
+    #
+    # y_true_count = target.sum()
+    # ctp = output[target == 1].sum()
+    # cfp = output[target == 0].sum()
+    # beta_squared = beta * beta
+    #
+    # c_precision = ctp / (ctp + cfp + smooth)
+    # c_recall = ctp / (y_true_count + smooth)
+    # dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
+
+    return f_beta
 
 
 class CVFbeta:

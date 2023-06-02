@@ -45,8 +45,8 @@ class BaseTrainer:
 
         self.checkpoint_dir = Path(config['PATHS']['CP_DIR'])
 
-        if config.resume is not None:
-            self._resume_checkpoint(config.resume)
+        if config.resume_path is not None:
+            self._resume_checkpoint(config.resume_path)
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -75,7 +75,8 @@ class BaseTrainer:
 
             # print logged information to the screen
             for key, value in log.items():
-                self.logger.info('    {:15s}: {}'.format(str(key), value))
+                # self.logger.info('    {:15s}: {}'.format(str(key), value))
+                self.logger.info(f"    {key:15s}: {value}")
 
             # evaluate model performance according to configured metric, save the best checkpoint as model_best
             best = False
@@ -108,8 +109,7 @@ class BaseTrainer:
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch, save_best=best)
 
-        wandb.save(
-            path=(self.checkpoint_dir / f'{self.model_id}_best.pth'))
+        wandb.save(str(self.checkpoint_dir / f'{self.model_id}_best.pth'))
         wandb.finish()
 
     def _save_checkpoint(self, epoch, save_best=False):
@@ -124,7 +124,7 @@ class BaseTrainer:
         state = {
             'arch': arch,
             'epoch': epoch,
-            'state_dict': self.model.state_dict(),
+            'model': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'monitor_best': self.mnt_best,
             # 'config': self.config
@@ -132,7 +132,7 @@ class BaseTrainer:
                 k: v for k, v in self.config.items() if k in ['model', 'optimizer', 'trainer']
             }
         }
-        filename = str(self.checkpoint_dir / f'{self.model_id}_checkpoint-epoch{epoch}.pth')
+        filename = str(self.checkpoint_dir / f'{self.model_id}_checkpoints.pth')
         torch.save(state, filename)
         self.logger.info("Saving checkpoint: {} ...".format(filename))
         if save_best:
@@ -156,7 +156,7 @@ class BaseTrainer:
         if checkpoint['config']['model'] != self.config['arch']:
             self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
                                 "checkpoint. This may yield an exception while state_dict is being loaded.")
-        self.model.load_state_dict(checkpoint['state_dict'])
+        self.model.load_state_dict(checkpoint['model'])
 
         # load optimizer state from checkpoint only when optimizer type is not changed.
         if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:

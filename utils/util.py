@@ -77,8 +77,8 @@ def prepare_device(n_gpu_use):
     return device, list_ids
 
 
-def get_saved_model_path(cfg, fold=1):
-    return str(cfg['model_dir'] / f'{cfg["model_name"]}_{cfg["in_channels"]}_best.pth')
+# def get_saved_model_path(cfg, fold=1):
+#     return str(cfg['model_dir'] / f'{cfg["model_name"]}_{cfg["in_channels"]}_best.pth')
 
 
 # ref.: https://www.kaggle.com/stainsby/fast-tested-rle
