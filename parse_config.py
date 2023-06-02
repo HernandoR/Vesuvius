@@ -1,12 +1,81 @@
 import logging
 import os
+import socket
 from datetime import datetime
 from functools import reduce, partial
 from operator import getitem
-from pathlib import Path
 
 from logger import setup_logging
-from utils import read_json, write_json
+from utils import *
+
+
+# from pathlib import Path
+
+def decide_paths():
+    HOST = socket.gethostname()
+
+    if HOST.endswith("cloudlab.us"):
+        is_kaggle = False
+        HOST = "cloudlab"
+    kaggle_run_type = os.getenv("KAGGLE_KERNEL_RUN_TYPE")
+    if kaggle_run_type is None:
+        is_kaggle = False
+    else:
+        is_kaggle = True
+        HOST = "kaggle"
+        print("Kaggle run type: {}".format(kaggle_run_type))
+
+    is_test = False
+    is_train = True
+
+    is_to_submit = kaggle_run_type == "Batch"
+
+    if HOST == "cloudlab":
+        ROOT_DIR = Path("/local/Codes/Vesuvius").absolute()
+        DATA_DIR = ROOT_DIR / "data" / "raw"
+        OUTPUT_DIR = ROOT_DIR / "saved"
+
+        CP_DIR = OUTPUT_DIR / "checkpoints"
+        LOG_DIR = OUTPUT_DIR / "logs"
+        CACHE_DIR = OUTPUT_DIR / "cache"
+        EXTERNAL_MODELS_DIR = ROOT_DIR / "model"
+
+    elif HOST == "kaggle":
+        ROOT_DIR = Path("/kaggle")
+        DATA_DIR = ROOT_DIR / "input" / "vesuvius-challenge-ink-detection"
+        OUTPUT_DIR = ROOT_DIR / "working" / "saved"
+
+        CP_DIR = OUTPUT_DIR / "checkpoints"
+        LOG_DIR = OUTPUT_DIR / "logs"
+        CACHE_DIR = OUTPUT_DIR / "cache"
+        EXTERNAL_MODELS_DIR = ROOT_DIR / "input"
+    else:
+        ROOT_DIR = Path("../../").absolute()
+        DATA_DIR = ROOT_DIR / "data" / "raw"
+        OUTPUT_DIR = ROOT_DIR / "saved"
+        #
+        CP_DIR = OUTPUT_DIR / "checkpoints"
+        LOG_DIR = OUTPUT_DIR / "logs"
+        CACHE_DIR = OUTPUT_DIR / "cache"
+        EXTERNAL_MODELS_DIR = ROOT_DIR / "model"
+
+    print(f"ROOT_DIR: {ROOT_DIR}")
+    assert os.listdir(DATA_DIR) != [], "Data directory is empty"
+
+    for p in [ROOT_DIR, DATA_DIR, OUTPUT_DIR, CP_DIR, LOG_DIR, CACHE_DIR]:
+        if os.path.exists(p) is False:
+            os.makedirs(p)
+
+    return {
+        "ROOT_DIR": ROOT_DIR,
+        "DATA_DIR": DATA_DIR,
+        "OUTPUT_DIR": OUTPUT_DIR,
+        # "CP_DIR": CP_DIR,
+        # "LOG_DIR": LOG_DIR,
+        # "CACHE_DIR": CACHE_DIR,
+        "EXTERNAL_MODELS_DIR": EXTERNAL_MODELS_DIR,
+        "HOST": HOST,
+    }
 
 
 class ConfigParser:
@@ -23,14 +92,26 @@ class ConfigParser:
         self._config = _update_config(config, modification)
         self.resume = resume
 
+        PATHS = decide_paths()
         # set save_dir where trained model and log will be saved.
-        save_dir = Path(self.config['trainer']['save_dir'])
+        save_dir = PATHS["OUTPUT_DIR"]
+        self._data_dir = PATHS["DATA_DIR"]
+        self._root_dir = PATHS["ROOT_DIR"]
+        self.HOST = PATHS["HOST"]
 
-        exper_name = self.config['name']
+        # Write a memo of exp_name, exp_id, and run_id
+        Model_Proto = self.config["arch"]["Proto"]
+        Model_type = self.config["arch"]["model_type"]
+        Channel = self.config["arch"]["channel"]
+        exp_name = f"{Model_Proto}_{Model_type}model_{Channel}chs"
+
         if run_id is None:  # use timestamp as default run-id
             run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-        self._save_dir = save_dir / 'models' / exper_name / run_id
-        self._log_dir = save_dir / 'log' / exper_name / run_id
+        self._save_dir = save_dir / "checkpoints" / exp_name / run_id
+        self._log_dir = save_dir / 'logs' / exp_name / run_id
+        self._cache_dir = save_dir / 'cache'
+        self._external_models_dir = PATHS["EXTERNAL_MODELS_DIR"]
+
 
         # add run_id to configs
         self.config['run_id'] = run_id
@@ -43,7 +124,7 @@ class ConfigParser:
         self.log_dir.mkdir(parents=True, exist_ok=exist_ok)
 
         # save updated config file to the checkpoint dir
-        write_json(self.config, self.save_dir / 'config.json')
+        write_yaml(self.config, self.save_dir / 'config.json')
 
         # configure logging module
         setup_logging(self.log_dir)
@@ -54,10 +135,12 @@ class ConfigParser:
         }
 
     @classmethod
-    def from_args(cls, args, options=''):
+    def from_args(cls, args, options=None):
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
+        if options is None:
+            options = []
         for opt in options:
             args.add_argument(*opt.flags, default=None, type=opt.type)
         if not isinstance(args, tuple):
@@ -74,11 +157,12 @@ class ConfigParser:
             resume = None
             cfg_fname = Path(args.config)
 
-        config = read_json(cfg_fname)
+        # config = read_json(cfg_fname)
+        config = read_yaml(cfg_fname)
         if args.config and resume:
             # update new config for fine-tuning
-            config.update(read_json(args.config))
-
+            # config.update(read_json(args.config))
+            config.update(read_yaml(args.config))
         # parse custom cli options into dictionary
         modification = {opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options}
         return cls(config, resume, modification)

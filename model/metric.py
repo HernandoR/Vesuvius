@@ -1,4 +1,9 @@
+
 import torch
+
+from logger import Loggers
+
+Logger = Loggers.get_logger(__name__)
 
 
 def accuracy(output, target):
@@ -18,3 +23,14 @@ def top_k_acc(output, target, k=3):
         for i in range(k):
             correct += torch.sum(pred[:, i] == target).item()
     return correct / len(target)
+
+
+def precision(output, target):
+    with torch.no_grad():
+        pred = torch.argmax(output, dim=1)
+        assert pred.shape[0] == len(target)
+        correct = 0
+        correct += torch.sum(pred == target).item()
+    return correct / len(target)
+
+

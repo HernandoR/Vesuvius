@@ -100,18 +100,24 @@ ENV/
 # mypy
 .mypy_cache/
 
+
 # input data, saved log, checkpoints
-data/
-wandb/
-input/
-output/
+data/*
+wandb/*
+input/*
+output/*
 saved/
-datasets/
+datasets/*
+
+
+
+model/*/*
+
 
 # editor, os cache directory
-.vscode/
-.idea/
-__MACOSX/
+.vscode/*
+.idea/*
+__MACOSX/*
 
 # personal config files
 *.cfg

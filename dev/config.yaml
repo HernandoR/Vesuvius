@@ -1,0 +1,78 @@
+PATHS:
+  CACHE_DIR: /home/lz/Codes/Vesuvius/dev/../saved/cache
+  CP_DIR: /home/lz/Codes/Vesuvius/dev/../saved/checkpoints
+  DATA_DIR: /home/lz/Codes/Vesuvius/dev/../data/raw
+  EXTERNAL_MODELS_DIR: /home/lz/Codes/Vesuvius/dev/../model
+  LOG_DIR: /home/lz/Codes/Vesuvius/dev/../saved/logs
+  OUTPUT_DIR: /home/lz/Codes/Vesuvius/dev/../saved
+  ROOT_DIR: /home/lz/Codes/Vesuvius/dev/..
+Patience: 16
+Run_mode: train
+comp_name: vesuvius
+data_loader:
+  args:
+    batch_size: 16
+    num_workers: 2
+    shuffle: true
+    validation_split: 0.1
+  num_workers: 2
+  type: VesuviusDataLoader
+dataset:
+  cache_dir: /home/lz/Codes/Vesuvius/dev/../saved/cache
+  data_dir: /home/lz/Codes/Vesuvius/dev/../data/raw
+  image_sets:
+  - '2'
+  in_channels: 6
+  stride: 56
+  tile_size: 224
+  type: VesuviusDataset
+  use_amp: true
+epochs: 50
+inf_weight: best
+loss: BCELoss
+max_grad_norm: 1000
+metric_direction: maximize
+metrics:
+- fbeta
+- accuracy
+- precision
+- recall
+- roc_auc
+model:
+  Proto: Unet
+  args:
+    activation: null
+    classes: 1
+    encoder_name: se_resnext50_32x4d
+    encoder_weights: imagenet
+    in_channels: 6
+  in_channels: 6
+  model_type: Multi
+  pretrained: true
+  resume_path: null
+  tile_size: 224
+n_gpu: 1
+objective_cv: binary
+optimizer:
+  args:
+    lr: 1.0e-06
+    weight_decay: 1.0e-06
+  min_lr: 1.0e-06
+  type: AdamW
+print_freq: 50
+resume: ture
+resume_path: null
+scheduler:
+  args:
+    T_max: 50
+    eta_min: 1.0e-07
+  type: CosineAnnealingLR
+seed: 3407
+trainer:
+  early_stop: 16
+  epochs: 50
+  monitor: max train/fbeta
+  save_period: 5
+use_amp: true
+wandb_mode: online
+warmup_factor: 10
